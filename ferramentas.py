@@ -5,6 +5,7 @@ from ddgs import DDGS
 import psutil
 import pyautogui
 import os
+import pywhatkit
 
 @tool
 def ver_hora():
@@ -77,8 +78,9 @@ def monitorar_sistema():
 @tool
 def controlar_midia(comando: str):
   """
-    Controla música e sons do computador.
-    O argumento 'comando' deve ser um destes: 'pausar', 'tocar', 'proxima', 'anterior', 'aumentar', 'diminuir', 'mudo'.
+    Controla o player de áudio/vídeo que JÁ ESTÁ ABERTO.
+    Use APENAS para comandos de controle: 'pausar', 'retomar' (play), 'proxima', 'anterior', 'aumentar', 'diminuir', 'mudo'.
+    NÃO use isso para buscar músicas novas.
   """
 
   teclas = {
@@ -129,3 +131,13 @@ def ler_memoria():
   with open(caminho, "r", encoding="utf-8") as arquivo:
     conteudo = arquivo.read()
   return conteudo
+
+@tool
+def tocar_youtube(video: str):
+  """
+    Busca e toca um vídeo ou música NOVA no YouTube.
+    Use isso quando o usuário disser: 'toque [nome]', 'ouvir [nome]', 'bota [nome]'.
+  """
+
+  pywhatkit.playonyt(video)
+  return f"Tocando {video} no YouTube."

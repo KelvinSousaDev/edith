@@ -2,6 +2,8 @@ import cerebro
 from ouvidos import Ouvidos
 import voz
 
+WAKE_WORDS = ["jarvis", "alfred"]
+
 def iniciar_jarvis():
   print("Inicializando...")
 
@@ -10,18 +12,29 @@ def iniciar_jarvis():
   voz.falar("Sistemas online. Ao seu dispor, mestre.")
 
   while True:
-    print("Aguardando comando...")
+    print("Aguardando comando...", flush=True)
 
     texto_usuario = jarvis_ouvidos.ouvir()
-
     if texto_usuario:
-      print(f"👤 Mestre: {texto_usuario}")
+      texto_lower = texto_usuario.lower().strip()
 
-      print("🧠 Processando...")
-      resposta_jarvis = cerebro.pensar(texto_usuario)
+      ativou = False
+      for palavra in WAKE_WORDS:
+        if texto_lower.startswith(palavra):
+          ativou = True
+          break
+      
+      if ativou:
+        print(f"✅ Comando aceito: {texto_usuario}")
+        print("🧠 Processando...")
+        texto_final = texto_usuario.replace("Jarvis", "").replace("Alfred", "").strip()
 
-      print(f"Jarvis: {resposta_jarvis}")
-      voz.falar(resposta_jarvis)
+        resposta_jarvis = cerebro.pensar(texto_final)
+        print(f"Jarvis: {resposta_jarvis}")
+        voz.falar(resposta_jarvis)
+      
+      else:
+        print(f"🔇 Ignorado (Sem wake word): {texto_usuario}")
 
 if __name__ == "__main__":
   iniciar_jarvis()

@@ -1,6 +1,6 @@
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage
-from ferramentas import ver_hora, abrir_programa, pesquisar_internet, monitorar_sistema, controlar_midia, ler_memoria, salvar_memoria
+from ferramentas import ver_hora, abrir_programa, pesquisar_internet, monitorar_sistema, controlar_midia, ler_memoria, salvar_memoria, tocar_youtube
 
 
 print("🧠 Conectando ao Cérebro Local...")
@@ -14,10 +14,11 @@ sistema = SystemMessage(
   """
 )
 
-llm = ChatOllama(model="llama3.2",temperature=0.5)
+llm = ChatOllama(model="llama3.2",temperature=0.1)
 
 lista_ferramentas = [
-  ver_hora, abrir_programa, pesquisar_internet, monitorar_sistema, controlar_midia, ler_memoria, salvar_memoria
+  ver_hora, abrir_programa, pesquisar_internet, monitorar_sistema, controlar_midia, ler_memoria, salvar_memoria,
+  tocar_youtube
   ]
 llm_com_ferramentas = llm.bind_tools(lista_ferramentas)
 
@@ -28,8 +29,11 @@ mapa_funcoes = {
   "monitorar_sistema": monitorar_sistema,
   "controlar_midia": controlar_midia,
   "ler_memoria": ler_memoria,
-  "salvar_memoria": salvar_memoria
+  "salvar_memoria": salvar_memoria,
+  "tocar_youtube": tocar_youtube
 }
+
+ferramentas_imediatas = ["abrir_programa", "controlar_midia", "tocar_youtube", "salvar_memoria"]
 
 def pensar(texto_usuario):
   mensagens = [sistema, HumanMessage(content=texto_usuario)]
@@ -48,6 +52,10 @@ def pensar(texto_usuario):
         print(f"⚙️ Executando: {nome_ferramenta}...")
         funcao_real = mapa_funcoes[nome_ferramenta]
         resultado = funcao_real.invoke(argumentos)
+
+        if nome_ferramenta in ferramentas_imediatas:
+          return str(resultado)
+
         dados_brutos += str(resultado) + ". "
 
     print(f"🔍 Dados crus recebidos: {dados_brutos}")

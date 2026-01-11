@@ -7,7 +7,7 @@ ID_MICROFONE = 27
 class Ouvidos:
   def __init__(self):
     print("🧠 Carregando Ouvidos (Whisper)...")
-    self.modelo = faster_whisper.WhisperModel("base", device="cpu", compute_type="int8")
+    self.modelo = faster_whisper.WhisperModel("small", device="cpu", compute_type="int8")
 
   def ouvir(self):
     reconhecer = sr.Recognizer()
@@ -16,14 +16,14 @@ class Ouvidos:
       print("Ouvindo...", flush=True)
 
       try:
-        audio = reconhecer.listen(source, timeout=10, phrase_time_limit=10)
+        audio = reconhecer.listen(source, timeout=5, phrase_time_limit=8)
 
         with open("temp_mic.wav", "wb") as f:
           f.write(audio.get_wav_data())
 
-        segmentos, _ = self.modelo.transcribe("temp_mic.wav", language="pt")
+        segmentos, _ = self.modelo.transcribe("temp_mic.wav", language="pt", initial_prompt="A conversa é com uma IA chamada Jarvis ou Alfred criada por Kelvin.")
         texto_transcrito = ""
-
+        
         for segmento in segmentos:
           texto_transcrito += segmento.text
         
