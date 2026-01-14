@@ -3,6 +3,7 @@ import threading
 import cerebro, voz
 from ouvidos import Ouvidos
 import re
+from ferramentas import ver_hora, verificar_clima
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -74,11 +75,29 @@ class IAGUI(ctk.CTk):
 
     # Inicialização Completa
     self.update_status("#00ff00", "ONLINE")
-    voz.falar("Interface visual conectada.")
+
+    # Protocolo Inicial --------------------------
+    try:
+      hora_atual = ver_hora.invoke({})
+      clima_atual = verificar_clima.invoke({"cidade": "Camaquã"})
+
+      texto_prompt = (
+        f"Gere uma saudação curta, sarcástica e executiva para o Mestre Kelvin. "
+        f"Dados atuais: {hora_atual} e {clima_atual}. "
+        f"NÃO pesquise nada, apenas monte a frase."
+      )
+
+      saudacao = cerebro.pensar(texto_prompt)
+      voz.falar(saudacao)
+
+    except Exception as e:
+      print(f"Erro no protocolo matinal: {e}")
+      voz.falar("Sistemas online. Erro ao gerar relatório matinal.")
     
     # Palavras de ativação locais
-    WAKE_WORDS = ["edith", "edit" "jarvis", "sexta"]
-    
+    WAKE_WORDS = ["edith", "edit", "jarvis", "sexta"]
+
+    # Loop Principal ----------------------
     while self.running:
       self.update_status("white", "OUVINDO AMBIENTE...")
       texto_usuario = jarvis_ouvidos.ouvir()
