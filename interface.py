@@ -8,73 +8,100 @@ from ferramentas import ver_hora, verificar_clima
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-class IAGUI(ctk.CTk):
+class HUD(ctk.CTk):
   def __init__(self):
     super().__init__()
 
-    self.title("F.R.I.D.A.Y - Interface Neural")
-    self.geometry("400x450")
+    # Remove Barra de títulos e define a posição da janela
+    self.overrideredirect(True)
+    self.geometry("300x150+1000+50")
     self.resizable(False, False)
-    self.status_dot = ctk.CTkLabel(
-      self, 
-      text="●", 
-      font=("Arial", 140), 
-      text_color="#555555"
+    # Efeito de Transparência
+    self.COR_TRANSPARENTE = "#000001"
+    self.wm_attributes("-transparentcolor", self.COR_TRANSPARENTE)
+    self.configure(fg_color=self.COR_TRANSPARENTE)
+    # Definindo o frame que vai segurar tudo
+    self.container = ctk.CTkFrame(self, fg_color=self.COR_TRANSPARENTE)
+    self.container.pack(expand=True, fill="both")
+    # Desenho do "Olho"
+    self.nucleo_visual = ctk.CTkCanvas(
+      self.container, 
+      width=40, 
+      height=40, 
+      bg=self.COR_TRANSPARENTE, 
+      highlightthickness=0
     )
-    self.status_dot.pack(pady=(50, 20))
-
-    self.status_text = ctk.CTkLabel(
-      self, 
+    self.circulo_id = self.nucleo_visual.create_oval(2, 2, 38, 38, fill="#333333", outline="")
+    self.nucleo_visual.pack(pady=(10, 5))
+    # Texto Informando o Status
+    self.label_status = ctk.CTkLabel(
+      self.container, 
       text="SISTEMAS OFFLINE", 
-      font=("Roboto Mono", 18, "bold")
-    )
-    self.status_text.pack(pady=10)
-
-    self.user_text = ctk.CTkLabel(
-      self,
-      text="...",
-      font=("Arial", 12),
+      font=("Roboto Mono", 12, "bold"),
       text_color="gray"
     )
-    self.user_text.pack(pady=5)
-
-    self.btn_iniciar = ctk.CTkButton(
-      self, 
-      text="INICIAR PROTOCOLO", 
-      command=self.start_thread,
-      width=200,
-      height=40,
-      font=("Arial", 14, "bold")
+    self.label_status.pack(pady=0)
+    # Texto do Usuário
+    self.user_text = ctk.CTkLabel(
+      self.container,
+      text="...",
+      font=("Arial", 10),
+      text_color="#888888"
     )
-    self.btn_iniciar.pack(pady=40)
-
+    self.user_text.pack(pady=5)
+    # Botão de Inicio
+    self.btn_iniciar = ctk.CTkButton(
+      self.container, 
+      text="ATIVAR", 
+      command=self.start_thread,
+      width=100,
+      height=25,
+      fg_color="#222222",
+      hover_color="#444444",
+      font=("Arial", 10, "bold")
+    )
+    self.btn_iniciar.pack(pady=10)
+    # Habilidade de Arrastar
+    self.bind("<Button-1>", self.comecar_arrastar)
+    self.bind("<B1-Motion>", self.arrastar_janela)
     self.running = False
+
+  def comecar_arrastar(self, event):
+    self.x_mouse = event.x
+    self.y_mouse = event.y
+    
+  def arrastar_janela(self, event):
+    x_tela = event.x_root
+    y_tela = event.y_root
+    novo_x = x_tela - self.x_mouse
+    novo_y = y_tela - self.y_mouse
+    self.geometry(f"+{novo_x}+{novo_y}")
+
+  def update_visual(self, cor_nucleo, texto_status, cor_texto="white"):
+    self.nucleo_visual.itemconfig(self.circulo_id, fill=cor_nucleo)
+    self.label_status.configure(text=texto_status, text_color=cor_texto)
 
   def start_thread(self):
      if not self.running:
       self.running = True
-      self.btn_iniciar.configure(state="disabled", text="SISTEMAS ONLINE", fg_color="green")
+      self.btn_iniciar.pack_forget()
 
       t = threading.Thread(target=self.main_loop)
       t.daemon = True
       t.start()
-  
-  def update_status(self, color, text):
-     self.status_dot.configure(text_color=color)
-     self.status_text.configure(text=text)
 
   def main_loop(self):
         
-    self.update_status("orange", "CARREGANDO...")
+    self.update_visual("orange", "INICIALIZANDO...", "orange")
     try:
       jarvis_ouvidos = Ouvidos()
     except Exception as e:
-      self.update_status("red", "ERRO DE MICROFONE")
-      self.user_text.configure(text=str(e))
+      self.update_visual("red", "ERRO MIC", "red")
+      self.user_text.configure(text=str(e)[:30])
       return
 
     # Inicialização Completa
-    self.update_status("#00ff00", "ONLINE")
+    self.update_visual("#00ff00", "COLETANDO DADOS...", "#00ff00")
 
     # Protocolo Inicial --------------------------
     try:
@@ -99,7 +126,7 @@ class IAGUI(ctk.CTk):
 
     # Loop Principal ----------------------
     while self.running:
-      self.update_status("white", "OUVINDO AMBIENTE...")
+      self.update_visual("cyan", "ESCUTANDO...", "cyan")
       texto_usuario = jarvis_ouvidos.ouvir()
 
       if texto_usuario:
@@ -116,15 +143,17 @@ class IAGUI(ctk.CTk):
           
         if ativou:
           self.user_text.configure(text=f'"{texto_usuario}"')
-          self.update_status("cyan", "PROCESSANDO...")
+          self.update_visual("#ff00ff", "PROCESSANDO...", "#ff00ff")
           resposta = cerebro.pensar(texto_usuario)
 
-          self.update_status("purple", "FALANDO...")
+          self.update_visual("#00ff00", "FALANDO...", "#00ff00")
           voz.falar(resposta)
+
+          self.user_text.configure(text="...")
         else:
-          self.user_text.configure(text=f"(Ignorado: {texto_usuario})")
-          self.update_status("gray", "AGUARDANDO...")
+          self.user_text.configure(text=f"(Ignorado)")
+          self.update_visual("#555555", "AGUARDANDO...", "gray")
 
 if __name__ == "__main__":
-    app = IAGUI()
+    app = HUD()
     app.mainloop()
